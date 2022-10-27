@@ -14,6 +14,7 @@ ___
 library(tidyverse)
 library(spotifyr)
 library(DT)
+library(ggridges)
 
 # library(spotifyr)
 # library(plyr)
@@ -168,6 +169,22 @@ for (i in 1:length(df$lyrics)) {
 str
 ```
 
+```{r}
+# names(strokes)[9:19]
+album_levels = c("Is This It", "Room On Fire", "First Impressions Of Earth",
+                 "Angles", "Comedown Machine", "The New Abnormal")
+
+strokes$album_name = factor(strokes$album_name, levels = album_levels)
+
+fig = strokes |>
+  ggplot(aes(valence, fct_rev(album_name))) +
+  geom_density_ridges(aes(fill = album_name), scale = 0.9, col = "transparent", alpha = 0.75) +
+  labs(x = "Valence", y = NULL) +
+  theme(legend.position = "none",
+        axis.text.x = element_blank())
+
+suppressMessages(print(fig))
+```
 
 
 
