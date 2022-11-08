@@ -186,6 +186,33 @@ fig = strokes |>
 suppressMessages(print(fig))
 ```
 
+```{r}
+# library(geniusr)
+# genius_token(T)
+# client id = u2X4arrcpERbK2qUOuWi4-SNWDNUJ8bMinDq6jbQPFWKFthB-g5mHNOZjer1Hk7z
+# client secret = kOLR9vdB1UsVAOT8gttk2EyeMULG71AL4tVuGQlSpvIiy0YNYo8J_NwZerYm-0FATalY4ydA7SRJnTzHS4zfBA
+# access token = q2nsw8oL2l8J5Qs6-Y2DbczMuEUBVgyZ5GetLPuDdxbia3kP78xssEwKSt4GXif0
+```
+
+```{r}
+library(geniusr)
+library(dplyr)
+library(tidytext)
+
+# get lyrics
+# get_lyrics_search(artist_name = "Kanye West",
+#                   song_title = "Good Morning") %>% 
+#   # get lyric bigrams
+#   unnest_tokens(bigram, line, token = "ngrams", n = 2) %>%
+#   # look for good morning
+#   filter(bigram == "good morning") %>% 
+#   # count bigram frequency
+#   nrow()
+
+ode = get_lyrics_search(artist_name = "The Strokes",
+                  song_title = "Ode To The Mets")
+
+```
 
 
 

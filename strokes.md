@@ -64,15 +64,15 @@ strokes |>
 
 we have different values for the following variables:
 
--   `danceability` (0.631 v. 0.630)
--   `energy` (0.905 v. 0.908)
--   `loudness` (-2.44 v. -2.42)
--   `speechiness` (0.0325 v. 0.0326)
--   `acousticness` (0.0328 v. 0.0238)
--   `instrumentalness` (0.528 v. 0.592)
--   `liveness` (0.125 v. 0.116)
--   `valence` (0.969 v. 0.968)
--   `tempo` (120.520 v. 120.522)
+- `danceability` (0.631 v. 0.630)
+- `energy` (0.905 v. 0.908)
+- `loudness` (-2.44 v. -2.42)
+- `speechiness` (0.0325 v. 0.0326)
+- `acousticness` (0.0328 v. 0.0238)
+- `instrumentalness` (0.528 v. 0.592)
+- `liveness` (0.125 v. 0.116)
+- `valence` (0.969 v. 0.968)
+- `tempo` (120.520 v. 120.522)
 
 so how do we decide which one we keep and which we omit?
 
@@ -161,3 +161,83 @@ strokes |>
     ## 7 The Strokes The New Abnormal Why Are Sundays So Depressing
     ## 8 The Strokes The New Abnormal          Not The Same Anymore
     ## 9 The Strokes The New Abnormal               Ode To The Mets
+
+``` r
+# genius_get_artists <- function(artist_name = "the strokes", n_results = 10) {
+#   baseURL <- 'https://api.genius.com/search?q='
+#   requestURL <- paste0(baseURL, gsub(' ', '%20', artist_name),
+#                        '&per_page=', n_results,
+#                        '&access_token=', access_token)
+#   
+#   res <- GET(requestURL) %>% content %>% .$response %>% .$hits
+#   
+#   map_df(1:length(res), function(x) {
+#     tmp <- res[[x]]$result$primary_artist
+#     list(
+#       artist_id = tmp$id,
+#       artist_name = tmp$name
+#     )
+#   }) %>% unique
+# }
+# 
+# genius_artists = genius_get_artists("the strokes")
+```
+
+``` r
+df = data.frame(lyrics = c("they been saying", "you sophisticated", "we can't help it"))
+
+str = ""
+for (i in 1:length(df$lyrics)) {
+  str = paste(str, df$lyrics[i])
+}
+
+str
+```
+
+    ## [1] " they been saying you sophisticated we can't help it"
+
+``` r
+# names(strokes)[9:19]
+album_levels = c("Is This It", "Room On Fire", "First Impressions Of Earth",
+                 "Angles", "Comedown Machine", "The New Abnormal")
+
+strokes$album_name = factor(strokes$album_name, levels = album_levels)
+
+fig = strokes |>
+  ggplot(aes(valence, fct_rev(album_name))) +
+  geom_density_ridges(aes(fill = album_name), scale = 0.9, col = "transparent", alpha = 0.75) +
+  labs(x = "Valence", y = NULL) +
+  theme(legend.position = "none",
+        axis.text.x = element_blank())
+
+suppressMessages(print(fig))
+```
+
+![](strokes_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
+
+``` r
+# library(geniusr)
+# genius_token(T)
+# client id = u2X4arrcpERbK2qUOuWi4-SNWDNUJ8bMinDq6jbQPFWKFthB-g5mHNOZjer1Hk7z
+# client secret = kOLR9vdB1UsVAOT8gttk2EyeMULG71AL4tVuGQlSpvIiy0YNYo8J_NwZerYm-0FATalY4ydA7SRJnTzHS4zfBA
+# access token = q2nsw8oL2l8J5Qs6-Y2DbczMuEUBVgyZ5GetLPuDdxbia3kP78xssEwKSt4GXif0
+```
+
+``` r
+library(geniusr)
+library(dplyr)
+library(tidytext)
+
+# get lyrics
+# get_lyrics_search(artist_name = "Kanye West",
+#                   song_title = "Good Morning") %>% 
+#   # get lyric bigrams
+#   unnest_tokens(bigram, line, token = "ngrams", n = 2) %>%
+#   # look for good morning
+#   filter(bigram == "good morning") %>% 
+#   # count bigram frequency
+#   nrow()
+
+ode = get_lyrics_search(artist_name = "The Strokes",
+                  song_title = "Ode To The Mets")
+```
