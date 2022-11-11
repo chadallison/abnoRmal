@@ -184,36 +184,21 @@ strokes |>
 ```
 
 ``` r
-df = data.frame(lyrics = c("they been saying", "you sophisticated", "we can't help it"))
-
-str = ""
-for (i in 1:length(df$lyrics)) {
-  str = paste(str, df$lyrics[i])
-}
-
-str
-```
-
-    ## [1] " they been saying you sophisticated we can't help it"
-
-``` r
 # names(strokes)[9:19]
 album_levels = c("Is This It", "Room On Fire", "First Impressions Of Earth",
                  "Angles", "Comedown Machine", "The New Abnormal")
 
 strokes$album_name = factor(strokes$album_name, levels = album_levels)
 
-fig = strokes |>
+strokes |>
   ggplot(aes(valence, fct_rev(album_name))) +
   geom_density_ridges(aes(fill = album_name), scale = 0.9, col = "transparent", alpha = 0.75) +
   labs(x = "Valence", y = NULL) +
   theme(legend.position = "none",
         axis.text.x = element_blank())
-
-suppressMessages(print(fig))
 ```
 
-![](strokes_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
+![](strokes_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
 
 ``` r
 # library(geniusr)
@@ -224,9 +209,9 @@ suppressMessages(print(fig))
 ```
 
 ``` r
-library(geniusr)
-library(dplyr)
-library(tidytext)
+# library(geniusr)
+# library(dplyr)
+# library(tidytext)
 
 # get lyrics
 # get_lyrics_search(artist_name = "Kanye West",
@@ -238,6 +223,131 @@ library(tidytext)
 #   # count bigram frequency
 #   nrow()
 
-ode = get_lyrics_search(artist_name = "The Strokes",
-                  song_title = "Ode To The Mets")
+# songs_df = data.frame(song = c("Soma", "Is This It"), lyrics = NA)
+# for (i in 1:nrow(songs_df)) {
+#   df1 = get_lyrics_search(artist_name = "The Strokes", song_title = songs_df$song[1])
+#   str = ""
+#   for (i in 1:nrow(df1)) { str = paste(str, df1$line[i]) }
+#   lyrics = trimws(str)
+#   songs_df$lyrics[i] = lyrics
+#   songs_df
+# }
+
+### THE ABOVE ISN'T WORKING - MIGHT HAVE TO TRY A JOIN INSTEAD ###
+
+# get_lyrics_search(artist_name = "The Strokes",
+#                   song_title = "Soma")
+
+# get_artist_songs(artist_id = "The Strokes")
 ```
+
+``` r
+get_song_lyrics = function(song) {
+  df = get_lyrics_search(artist_name = "The Strokes",
+                         song_title = song)
+  str = ""
+  for (i in 1:nrow(df)) {
+    str = paste(str, df$line[i])
+  }
+  return(trimws(str))
+}
+```
+
+``` r
+# songs = c("Soma", "Someday")
+#
+# for (song in songs) {
+#   print(get_song_lyrics("The Strokes", song))
+# }
+```
+
+``` r
+# strokes$lyrics = "nothing yet"
+```
+
+``` r
+# num = 1
+# song_name = strokes$track_name[num]
+# lyrics = get_lyrics_search("The Strokes", song_name) |>
+#   pull(line)
+# 
+# str = ""
+# 
+# for (i in 1:length(lyrics)) {
+#   str = paste(str, lyrics[i])
+# }
+# 
+# str = trimws(str)
+# song_df = data.frame(track_name = song_name, lyrics = str)
+# 
+# strokes = left_join(strokes, song_df, by = "track_name")
+```
+
+``` r
+# lyrs = read_csv("all_with_lyrics.csv", col_types = cols())
+# strokes = left_join(strokes, lyrs, by = "track_name")
+```
+
+``` r
+### this works, chunk below will try to do it in a loop ###
+# strokes |>
+#   arrange(album_release_date) |>
+#   select(track_name, lyrics)
+# 
+# track = "50/50"
+# lyr = get_song_lyrics(track)
+# index = which(strokes$track_name == track)
+# strokes$lyrics[index] = lyr
+
+# strokes[which(is.na(strokes$lyrics)), ] |>
+#   select(track_name, lyrics)
+```
+
+``` r
+# strokes$lyrics[which(strokes$track_name == "50/50")] = "Why's she telling me the story of her life? All the things you wanna kill will give you spite And if you've taken all the prisoners inside As they're doling out their wisdom in the fire I will say! I will say don't judge me! I will say! I will say don't judge me! I wait on a darkened highway! I wait on a darkened highway! I can take as long as without looking by Why's she telling me the story of her life And if you've taken all the prisoners inside As they've thrown all their wisdom in the fire I will say! I will say don't judge me! I will say! I will say don't judge me! I wait on a darkened highway! I wait on a darkened highway! I will say! I will say don't judge me! I will say! I will say don't judge me! I wait on a darkened highway! I wait on a darkened highway!"
+# 
+# strokes$lyrics[which(strokes$track_name == "12:51")] = "Talk to me now I'm older Your friend told you 'cause I told her Friday nights have been lonely Change your plans and then phone me We could go and get forties Fuck goin' to that party Oh, really, your folks are away now? Alright, let's go, you convinced me 12:51 is the time my voice Found the words I sought Is it this stage I want? The world is shutting out for us Oh, we were tense for sure But we was confident Kiss me now that I'm older I won't try to control you Friday nights have been lonely Take it slow but don't warn me We'd go out and get forties Then we'd go to some party Oh, really, your folks are away now? Alright, I'm coming I'll be right there"
+```
+
+``` r
+# strokes |>
+#   count(lyrics)
+```
+
+# WE FINALLY HAVE ALL THE LYRICS
+
+``` r
+strokes = read_csv("strokes_all_lyrics.csv", col_types = cols())
+```
+
+``` r
+strokes |>
+  ggplot(aes(duration_ms)) +
+  geom_histogram(bins = 10, col = "black", fill = "transparent")
+```
+
+![](strokes_files/figure-gfm/unnamed-chunk-22-1.png)<!-- -->
+
+``` r
+library(tidytext)
+library(wordcloud)
+library(wesanderson)
+
+word_count = strokes |>
+  unnest_tokens(word, lyrics) |>
+  count(word, sort = T) |>
+  mutate(word = reorder(word, n)) |>
+  ungroup()
+
+omit_words = c("i", "you", "the", "to", "it", "a", "me", "and", "oh", "your", "in",
+               "on", "that", "for", "is", "but", "i'm", "no", "not", "you're", "of",
+               "we", "my", "so", "it's", "be", "they", "was", "yeah")
+
+word_count = word_count |> filter(!word %in% omit_words)
+
+wordcloud(words = word_count$word, freq = word_count$n,
+          max.words = 100, random.order = F,
+          colors = c("#ABCCD4", "#E9B3FF", "#82AC7E"))
+```
+
+![](strokes_files/figure-gfm/unnamed-chunk-23-1.png)<!-- -->
