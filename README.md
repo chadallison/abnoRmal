@@ -190,15 +190,167 @@ album_levels = c("Is This It", "Room On Fire", "First Impressions Of Earth",
 
 strokes$album_name = factor(strokes$album_name, levels = album_levels)
 
-strokes |>
+valence_by_album_plot = strokes |>
   ggplot(aes(valence, fct_rev(album_name))) +
   geom_density_ridges(aes(fill = album_name), scale = 0.9, col = "transparent", alpha = 0.75) +
   labs(x = "Valence", y = NULL) +
   theme(legend.position = "none",
         axis.text.x = element_blank())
+
+valence_by_album_plot
 ```
 
 ![](strokes_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
+
+``` r
+strokes |>
+  group_by(album_name) |>
+  summarise(average_valence = round(mean(valence), 3)) |>
+  arrange(desc(average_valence))
+```
+
+    ## # A tibble: 6 × 2
+    ##   album_name                 average_valence
+    ##   <fct>                                <dbl>
+    ## 1 Is This It                           0.743
+    ## 2 Room On Fire                         0.647
+    ## 3 Angles                               0.563
+    ## 4 First Impressions Of Earth           0.515
+    ## 5 Comedown Machine                     0.501
+    ## 6 The New Abnormal                     0.341
+
+as the above ridgeline plot suggests, the valence of Strokes albums has
+become progressively lower over the course of their discography, with
+each successive album having a lower average valence than its
+predecessor. next, let’s look at which songs have the highest and lowest
+valence values.
+
+``` r
+# highest valence
+strokes |>
+  select(track_name, valence) |>
+  mutate(valence = round(valence, 3)) |>
+  arrange(desc(valence)) |>
+  head(5)
+```
+
+    ##           track_name valence
+    ## 1 You Only Live Once   0.969
+    ## 2    One Way Trigger   0.964
+    ## 3    Alone, Together   0.961
+    ## 4       Killing Lies   0.927
+    ## 5     Automatic Stop   0.914
+
+``` r
+# lowest valence
+strokes |>
+  select(track_name, valence) |>
+  mutate(valence = round(valence, 3)) |>
+  arrange(valence) |>
+  head(5)
+```
+
+    ##           track_name valence
+    ## 1       All The Time   0.078
+    ## 2           Selfless   0.089
+    ## 3    Heart In a Cage   0.121
+    ## 4 Vision of Division   0.157
+    ## 5       Call Me Back   0.185
+
+### WORK ON GETTING THIS INTO A DATA FRAME
+
+``` r
+# how about the highest and lowest valence songs on each album
+strokes$valence = round(strokes$valence, 3)
+
+# strokes |>
+#   mutate(valence = round(valence, 3)) |>
+#   group_by(album_name) |>
+#   summarise(min_valence = min(valence),
+#             max_valence = max(valence))
+
+"--- least valent tracks ---"
+```
+
+    ## [1] "--- least valent tracks ---"
+
+``` r
+paste("Is This It:", strokes$track_name[which(strokes$valence == 0.481)])
+```
+
+    ## [1] "Is This It: Take It Or Leave It"
+
+``` r
+paste("Room On Fire", strokes$track_name[which(strokes$valence == 0.403)])
+```
+
+    ## [1] "Room On Fire I Can't Win"
+
+``` r
+paste("First Impressions Of Earth:", strokes$track_name[which(strokes$valence == 0.121)])
+```
+
+    ## [1] "First Impressions Of Earth: Heart In a Cage"
+
+``` r
+paste("Angles:", strokes$track_name[which(strokes$valence == 0.185)])
+```
+
+    ## [1] "Angles: Call Me Back"
+
+``` r
+paste("Comedown Machine:", strokes$track_name[which(strokes$valence == 0.078)])
+```
+
+    ## [1] "Comedown Machine: All The Time"
+
+``` r
+paste("The New Abnormal:", strokes$track_name[which(strokes$valence == 0.089)])
+```
+
+    ## [1] "The New Abnormal: Selfless"
+
+``` r
+"--- most valent tracks ---"
+```
+
+    ## [1] "--- most valent tracks ---"
+
+``` r
+paste("Is This It:", strokes$track_name[which(strokes$valence == 0.961)])
+```
+
+    ## [1] "Is This It: Alone, Together"
+
+``` r
+paste("Room On Fire:", strokes$track_name[which(strokes$valence == 0.914)])
+```
+
+    ## [1] "Room On Fire: Automatic Stop"
+
+``` r
+paste("First Impressions Of Earth:", strokes$track_name[which(strokes$valence == 0.969)])
+```
+
+    ## [1] "First Impressions Of Earth: You Only Live Once"
+
+``` r
+paste("Angles:", strokes$track_name[which(strokes$valence == 0.885)])
+```
+
+    ## [1] "Angles: Taken for a Fool"
+
+``` r
+paste("Comedown Machine:", strokes$track_name[which(strokes$valence == 0.964)])
+```
+
+    ## [1] "Comedown Machine: One Way Trigger"
+
+``` r
+paste("The New Abnormal:", strokes$track_name[which(strokes$valence == 0.649)])
+```
+
+    ## [1] "The New Abnormal: The Adults Are Talking"
 
 ``` r
 # library(geniusr)
@@ -321,14 +473,6 @@ strokes = read_csv("strokes_all_lyrics.csv", col_types = cols())
 ```
 
 ``` r
-strokes |>
-  ggplot(aes(duration_ms)) +
-  geom_histogram(bins = 10, col = "black", fill = "transparent")
-```
-
-![](strokes_files/figure-gfm/unnamed-chunk-22-1.png)<!-- -->
-
-``` r
 library(tidytext)
 library(wordcloud)
 library(wesanderson)
@@ -350,4 +494,4 @@ wordcloud(words = word_count$word, freq = word_count$n,
           colors = c("#ABCCD4", "#E9B3FF", "#82AC7E"))
 ```
 
-![](strokes_files/figure-gfm/unnamed-chunk-23-1.png)<!-- -->
+![](strokes_files/figure-gfm/unnamed-chunk-25-1.png)<!-- -->
