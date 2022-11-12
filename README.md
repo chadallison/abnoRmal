@@ -183,8 +183,9 @@ strokes |>
 # genius_artists = genius_get_artists("the strokes")
 ```
 
+# valence analysis
+
 ``` r
-# names(strokes)[9:19]
 album_levels = c("Is This It", "Room On Fire", "First Impressions Of Earth",
                  "Angles", "Comedown Machine", "The New Abnormal")
 
@@ -257,141 +258,52 @@ strokes |>
     ## 4 Vision of Division   0.157
     ## 5       Call Me Back   0.185
 
-### WORK ON GETTING THIS INTO A DATA FRAME
-
 ``` r
-# how about the highest and lowest valence songs on each album
+# highest and lowest valence songs on each album
 strokes$valence = round(strokes$valence, 3)
 
-# strokes |>
-#   mutate(valence = round(valence, 3)) |>
-#   group_by(album_name) |>
-#   summarise(min_valence = min(valence),
-#             max_valence = max(valence))
+valence_table = strokes |>
+  mutate(valence = round(valence, 3)) |>
+  group_by(album_name) |>
+  summarise(min_valence = min(valence),
+            max_valence = max(valence))
 
-"--- least valent tracks ---"
+valence_table$min_track = "none"
+valence_table$max_track = "none"
+
+for (i in 1:6) {
+  valence_table$min_track[i] = strokes$track_name[which(strokes$valence == valence_table$min_valence[i])]
+  valence_table$max_track[i] = strokes$track_name[which(strokes$valence == valence_table$max_valence[i])]
+}
+
+valence_table |>
+  mutate(lowest_valence = paste0(min_track, ": ", min_valence),
+         highest_valence = paste0(max_track, ": ", max_valence),
+         difference = max_valence - min_valence) |>
+  select(album_name, lowest_valence, highest_valence, difference) |>
+  magrittr::set_colnames(c("Album", "Lowest Valence", "Highest Valence", "Difference"))
 ```
 
-    ## [1] "--- least valent tracks ---"
+    ## # A tibble: 6 × 4
+    ##   Album                      `Lowest Valence`           Highest Valenc…¹ Diffe…²
+    ##   <fct>                      <chr>                      <chr>              <dbl>
+    ## 1 Is This It                 Take It Or Leave It: 0.481 Alone, Together…   0.48 
+    ## 2 Room On Fire               I Can't Win: 0.403         Automatic Stop:…   0.511
+    ## 3 First Impressions Of Earth Heart In a Cage: 0.121     You Only Live O…   0.848
+    ## 4 Angles                     Call Me Back: 0.185        Taken for a Foo…   0.7  
+    ## 5 Comedown Machine           All The Time: 0.078        One Way Trigger…   0.886
+    ## 6 The New Abnormal           Selfless: 0.089            The Adults Are …   0.56 
+    ## # … with abbreviated variable names ¹​`Highest Valence`, ²​Difference
+
+# energy analysis
 
 ``` r
-paste("Is This It:", strokes$track_name[which(strokes$valence == 0.481)])
+strokes |>
+  ggplot(aes(energy, album_name)) +
+  geom_density_ridges(col = "transparent", aes(fill = album_name))
 ```
 
-    ## [1] "Is This It: Take It Or Leave It"
-
-``` r
-paste("Room On Fire", strokes$track_name[which(strokes$valence == 0.403)])
-```
-
-    ## [1] "Room On Fire I Can't Win"
-
-``` r
-paste("First Impressions Of Earth:", strokes$track_name[which(strokes$valence == 0.121)])
-```
-
-    ## [1] "First Impressions Of Earth: Heart In a Cage"
-
-``` r
-paste("Angles:", strokes$track_name[which(strokes$valence == 0.185)])
-```
-
-    ## [1] "Angles: Call Me Back"
-
-``` r
-paste("Comedown Machine:", strokes$track_name[which(strokes$valence == 0.078)])
-```
-
-    ## [1] "Comedown Machine: All The Time"
-
-``` r
-paste("The New Abnormal:", strokes$track_name[which(strokes$valence == 0.089)])
-```
-
-    ## [1] "The New Abnormal: Selfless"
-
-``` r
-"--- most valent tracks ---"
-```
-
-    ## [1] "--- most valent tracks ---"
-
-``` r
-paste("Is This It:", strokes$track_name[which(strokes$valence == 0.961)])
-```
-
-    ## [1] "Is This It: Alone, Together"
-
-``` r
-paste("Room On Fire:", strokes$track_name[which(strokes$valence == 0.914)])
-```
-
-    ## [1] "Room On Fire: Automatic Stop"
-
-``` r
-paste("First Impressions Of Earth:", strokes$track_name[which(strokes$valence == 0.969)])
-```
-
-    ## [1] "First Impressions Of Earth: You Only Live Once"
-
-``` r
-paste("Angles:", strokes$track_name[which(strokes$valence == 0.885)])
-```
-
-    ## [1] "Angles: Taken for a Fool"
-
-``` r
-paste("Comedown Machine:", strokes$track_name[which(strokes$valence == 0.964)])
-```
-
-    ## [1] "Comedown Machine: One Way Trigger"
-
-``` r
-paste("The New Abnormal:", strokes$track_name[which(strokes$valence == 0.649)])
-```
-
-    ## [1] "The New Abnormal: The Adults Are Talking"
-
-``` r
-# library(geniusr)
-# genius_token(T)
-# client id = u2X4arrcpERbK2qUOuWi4-SNWDNUJ8bMinDq6jbQPFWKFthB-g5mHNOZjer1Hk7z
-# client secret = kOLR9vdB1UsVAOT8gttk2EyeMULG71AL4tVuGQlSpvIiy0YNYo8J_NwZerYm-0FATalY4ydA7SRJnTzHS4zfBA
-# access token = q2nsw8oL2l8J5Qs6-Y2DbczMuEUBVgyZ5GetLPuDdxbia3kP78xssEwKSt4GXif0
-```
-
-``` r
-# library(geniusr)
-# library(dplyr)
-# library(tidytext)
-
-# get lyrics
-# get_lyrics_search(artist_name = "Kanye West",
-#                   song_title = "Good Morning") %>% 
-#   # get lyric bigrams
-#   unnest_tokens(bigram, line, token = "ngrams", n = 2) %>%
-#   # look for good morning
-#   filter(bigram == "good morning") %>% 
-#   # count bigram frequency
-#   nrow()
-
-# songs_df = data.frame(song = c("Soma", "Is This It"), lyrics = NA)
-# for (i in 1:nrow(songs_df)) {
-#   df1 = get_lyrics_search(artist_name = "The Strokes", song_title = songs_df$song[1])
-#   str = ""
-#   for (i in 1:nrow(df1)) { str = paste(str, df1$line[i]) }
-#   lyrics = trimws(str)
-#   songs_df$lyrics[i] = lyrics
-#   songs_df
-# }
-
-### THE ABOVE ISN'T WORKING - MIGHT HAVE TO TRY A JOIN INSTEAD ###
-
-# get_lyrics_search(artist_name = "The Strokes",
-#                   song_title = "Soma")
-
-# get_artist_songs(artist_id = "The Strokes")
-```
+![](strokes_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
 
 ``` r
 get_song_lyrics = function(song) {
@@ -405,68 +317,7 @@ get_song_lyrics = function(song) {
 }
 ```
 
-``` r
-# songs = c("Soma", "Someday")
-#
-# for (song in songs) {
-#   print(get_song_lyrics("The Strokes", song))
-# }
-```
-
-``` r
-# strokes$lyrics = "nothing yet"
-```
-
-``` r
-# num = 1
-# song_name = strokes$track_name[num]
-# lyrics = get_lyrics_search("The Strokes", song_name) |>
-#   pull(line)
-# 
-# str = ""
-# 
-# for (i in 1:length(lyrics)) {
-#   str = paste(str, lyrics[i])
-# }
-# 
-# str = trimws(str)
-# song_df = data.frame(track_name = song_name, lyrics = str)
-# 
-# strokes = left_join(strokes, song_df, by = "track_name")
-```
-
-``` r
-# lyrs = read_csv("all_with_lyrics.csv", col_types = cols())
-# strokes = left_join(strokes, lyrs, by = "track_name")
-```
-
-``` r
-### this works, chunk below will try to do it in a loop ###
-# strokes |>
-#   arrange(album_release_date) |>
-#   select(track_name, lyrics)
-# 
-# track = "50/50"
-# lyr = get_song_lyrics(track)
-# index = which(strokes$track_name == track)
-# strokes$lyrics[index] = lyr
-
-# strokes[which(is.na(strokes$lyrics)), ] |>
-#   select(track_name, lyrics)
-```
-
-``` r
-# strokes$lyrics[which(strokes$track_name == "50/50")] = "Why's she telling me the story of her life? All the things you wanna kill will give you spite And if you've taken all the prisoners inside As they're doling out their wisdom in the fire I will say! I will say don't judge me! I will say! I will say don't judge me! I wait on a darkened highway! I wait on a darkened highway! I can take as long as without looking by Why's she telling me the story of her life And if you've taken all the prisoners inside As they've thrown all their wisdom in the fire I will say! I will say don't judge me! I will say! I will say don't judge me! I wait on a darkened highway! I wait on a darkened highway! I will say! I will say don't judge me! I will say! I will say don't judge me! I wait on a darkened highway! I wait on a darkened highway!"
-# 
-# strokes$lyrics[which(strokes$track_name == "12:51")] = "Talk to me now I'm older Your friend told you 'cause I told her Friday nights have been lonely Change your plans and then phone me We could go and get forties Fuck goin' to that party Oh, really, your folks are away now? Alright, let's go, you convinced me 12:51 is the time my voice Found the words I sought Is it this stage I want? The world is shutting out for us Oh, we were tense for sure But we was confident Kiss me now that I'm older I won't try to control you Friday nights have been lonely Take it slow but don't warn me We'd go out and get forties Then we'd go to some party Oh, really, your folks are away now? Alright, I'm coming I'll be right there"
-```
-
-``` r
-# strokes |>
-#   count(lyrics)
-```
-
-# WE FINALLY HAVE ALL THE LYRICS
+### this is where i collected all the lyrics
 
 ``` r
 strokes = read_csv("strokes_all_lyrics.csv", col_types = cols())
@@ -494,4 +345,4 @@ wordcloud(words = word_count$word, freq = word_count$n,
           colors = c("#ABCCD4", "#E9B3FF", "#82AC7E"))
 ```
 
-![](strokes_files/figure-gfm/unnamed-chunk-25-1.png)<!-- -->
+![](strokes_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
