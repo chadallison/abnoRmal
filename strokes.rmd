@@ -303,6 +303,8 @@ strokes |>
 library(tidytext)
 library(wordcloud)
 library(wesanderson)
+library(dplyr)
+library(yarrr)
 
 word_count = strokes |>
   unnest_tokens(word, lyrics) |>
@@ -310,17 +312,74 @@ word_count = strokes |>
   mutate(word = reorder(word, n)) |>
   ungroup()
 
-omit_words = c("i", "you", "the", "to", "it", "a", "me", "and", "oh", "your", "in",
-               "on", "that", "for", "is", "but", "i'm", "no", "not", "you're", "of",
-               "we", "my", "so", "it's", "be", "they", "was", "yeah")
+generate_wordcloud = function(part) {
+  valid_words = parts_of_speech |>
+    filter(str_detect(pos, part)) |>
+    pull(word)
+  
+  fdata = word_count |>
+    filter(word %in% valid_words)
+  
+  wordcloud(words = fdata$word, freq = fdata$n,
+            max.words = 100, random.order = F,
+            colors = c("#ABCCD4", "#E9B3FF", "#82AC7E"))
+}
 
-word_count = word_count |> filter(!word %in% omit_words)
-
-wordcloud(words = word_count$word, freq = word_count$n,
-          max.words = 100, random.order = F,
-          colors = c("#ABCCD4", "#E9B3FF", "#82AC7E"))
+generate_wordcloud("Noun")
+generate_wordcloud("Adjective")
+generate_wordcloud("Adverb")
+generate_wordcloud("Verb")
 ```
 
+```{r}
+pirateplot(valence + danceability + energy ~ album_release_year, strokes,
+           pal = c("#FFF58F", "#C10000", "#000000", "#FF7DEF", "#FF5F5A", "#5AA0FF"),
+           xlab = "album", ylab = "sonic score", main = "sonic score = valence + danceability + energy",
+           theme = 0, point.o = 0.7, avg.line.o = 1, jitter.val = .05, 
+           bty = "n", cex.axis = 0.6, xaxt = "n")
+
+axis(1, cex.axis = 0.6, lwd = 0)
+legend("topright", c("1: Is This It", "2: Room on Fire", "3: First Impressions of Earth",
+                     "4: Angles", "5: Comedown Machine", "6: The New Abnormal"), bty = "n", cex = 0.6)
+```
+
+```{r}
+sonic_tracks = function(album) {
+  return(strokes |>
+           mutate(sonic_score = valence + danceability + energy) |>
+           select(album_name, track_name, sonic_score) |>
+           arrange(desc(sonic_score)) |>
+           filter(album_name == album))
+}
+
+all_albums = c("Is This It", "Room On Fire", "First Impressions Of Earth",
+               "Angles", "Comedown Machine", "The New Abnormal")
+
+lapply(all_albums, sonic_tracks)
+```
+
+```{r}
+words_by_album = strokes |>
+  select(album_name, track_name, lyrics) |>
+  unnest_tokens(words, lyrics) |>
+  group_by(album_name, track_name) |>
+  summarise(n = n())
+
+unique_words_album = strokes |>
+  select(album_name, track_name, lyrics) |>
+  unnest_tokens(words, lyrics) |>
+  group_by(album_name, track_name) |>
+  distinct(words) |>
+  group_by(album_name, track_name) |>
+  summarise(n = n())
+
+words_by_album |>
+  left_join(unique_words_album, by = "album_name") |>
+  rename(words = n.x, unique_words = n.y, track_name = track_name.x) |>
+  mutate(lexical_diversity = round(unique_words / words, 3)) |>
+  arrange(desc(lexical_diversity)) |>
+  select(album_name, track_name, lexical_diversity)
+```
 
 
 
