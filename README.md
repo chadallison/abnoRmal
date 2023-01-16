@@ -193,7 +193,7 @@ strokes$album_name = factor(strokes$album_name, levels = album_levels)
 strokes |>
   ggplot(aes(valence, fct_rev(album_name))) +
   geom_density_ridges(aes(fill = album_name), scale = 0.9, col = "transparent", alpha = 0.75) +
-  labs(x = "Valence", y = NULL) +
+  labs(x = "valence", y = NULL) +
   theme(legend.position = "none",
         axis.text.x = element_blank())
 ```
@@ -321,14 +321,6 @@ strokes = read_csv("strokes_all_lyrics.csv", col_types = cols())
 ```
 
 ``` r
-strokes |>
-  ggplot(aes(duration_ms)) +
-  geom_histogram(bins = 10, col = "black", fill = "transparent")
-```
-
-![](strokes_files/figure-gfm/unnamed-chunk-22-1.png)<!-- -->
-
-``` r
 library(tidytext)
 library(wordcloud)
 library(wesanderson)
@@ -357,25 +349,25 @@ generate_wordcloud = function(part) {
 generate_wordcloud("Noun")
 ```
 
-![](strokes_files/figure-gfm/unnamed-chunk-23-1.png)<!-- -->
+![](strokes_files/figure-gfm/unnamed-chunk-22-1.png)<!-- -->
 
 ``` r
 generate_wordcloud("Adjective")
 ```
 
-![](strokes_files/figure-gfm/unnamed-chunk-23-2.png)<!-- -->
+![](strokes_files/figure-gfm/unnamed-chunk-22-2.png)<!-- -->
 
 ``` r
 generate_wordcloud("Adverb")
 ```
 
-![](strokes_files/figure-gfm/unnamed-chunk-23-3.png)<!-- -->
+![](strokes_files/figure-gfm/unnamed-chunk-22-3.png)<!-- -->
 
 ``` r
 generate_wordcloud("Verb")
 ```
 
-![](strokes_files/figure-gfm/unnamed-chunk-23-4.png)<!-- -->
+![](strokes_files/figure-gfm/unnamed-chunk-22-4.png)<!-- -->
 
 ``` r
 pirateplot(valence + danceability + energy ~ album_release_year, strokes,
@@ -389,7 +381,7 @@ legend("topright", c("1: Is This It", "2: Room on Fire", "3: First Impressions o
                      "4: Angles", "5: Comedown Machine", "6: The New Abnormal"), bty = "n", cex = 0.6)
 ```
 
-![](strokes_files/figure-gfm/unnamed-chunk-24-1.png)<!-- -->
+![](strokes_files/figure-gfm/unnamed-chunk-23-1.png)<!-- -->
 
 ``` r
 sonic_tracks = function(album) {
@@ -407,7 +399,7 @@ lapply(all_albums, sonic_tracks)
 ```
 
     ## [[1]]
-    ## # A tibble: 11 × 3
+    ## # A tibble: 11 x 3
     ##    album_name track_name          sonic_score
     ##    <chr>      <chr>                     <dbl>
     ##  1 Is This It Alone, Together            2.34
@@ -423,7 +415,7 @@ lapply(all_albums, sonic_tracks)
     ## 11 Is This It Soma                       1.69
     ## 
     ## [[2]]
-    ## # A tibble: 11 × 3
+    ## # A tibble: 11 x 3
     ##    album_name   track_name              sonic_score
     ##    <chr>        <chr>                         <dbl>
     ##  1 Room On Fire The Way It Is                  2.29
@@ -439,7 +431,7 @@ lapply(all_albums, sonic_tracks)
     ## 11 Room On Fire Between Love & Hate            1.60
     ## 
     ## [[3]]
-    ## # A tibble: 14 × 3
+    ## # A tibble: 14 x 3
     ##    album_name                 track_name         sonic_score
     ##    <chr>                      <chr>                    <dbl>
     ##  1 First Impressions Of Earth You Only Live Once        2.50
@@ -458,7 +450,7 @@ lapply(all_albums, sonic_tracks)
     ## 14 First Impressions Of Earth Ask Me Anything           1.14
     ## 
     ## [[4]]
-    ## # A tibble: 10 × 3
+    ## # A tibble: 10 x 3
     ##    album_name track_name                      sonic_score
     ##    <chr>      <chr>                                 <dbl>
     ##  1 Angles     Machu Picchu                           2.39
@@ -473,7 +465,7 @@ lapply(all_albums, sonic_tracks)
     ## 10 Angles     Call Me Back                           1.22
     ## 
     ## [[5]]
-    ## # A tibble: 11 × 3
+    ## # A tibble: 11 x 3
     ##    album_name       track_name                  sonic_score
     ##    <chr>            <chr>                             <dbl>
     ##  1 Comedown Machine One Way Trigger                    2.42
@@ -489,7 +481,7 @@ lapply(all_albums, sonic_tracks)
     ## 11 Comedown Machine Call It Fate, Call It Karma        1.14
     ## 
     ## [[6]]
-    ## # A tibble: 9 × 3
+    ## # A tibble: 9 x 3
     ##   album_name       track_name                    sonic_score
     ##   <chr>            <chr>                               <dbl>
     ## 1 The New Abnormal The Adults Are Talking               1.99
@@ -507,7 +499,8 @@ words_by_album = strokes |>
   select(album_name, track_name, lyrics) |>
   unnest_tokens(words, lyrics) |>
   group_by(album_name, track_name) |>
-  summarise(n = n())
+  summarise(n = n(),
+            .groups = "drop")
 
 unique_words_album = strokes |>
   select(album_name, track_name, lyrics) |>
@@ -515,28 +508,29 @@ unique_words_album = strokes |>
   group_by(album_name, track_name) |>
   distinct(words) |>
   group_by(album_name, track_name) |>
-  summarise(n = n())
+  summarise(n = n(),
+            .groups = "drop")
 
-words_by_album |>
-  left_join(unique_words_album, by = "album_name") |>
-  rename(words = n.x, unique_words = n.y, track_name = track_name.x) |>
+track_lex_diversity = words_by_album |>
+  left_join(unique_words_album, by = c("album_name", "track_name")) |>
+  rename(words = n.x, unique_words = n.y) |>
   mutate(lexical_diversity = round(unique_words / words, 3)) |>
   arrange(desc(lexical_diversity)) |>
   select(album_name, track_name, lexical_diversity)
+
+ld_limit = 10
+
+bind_rows(head(arrange(track_lex_diversity, desc(lexical_diversity)), ld_limit),
+          tail(arrange(track_lex_diversity, desc(lexical_diversity)), ld_limit)) |>
+  arrange(desc(lexical_diversity)) |>
+  ggplot(aes(reorder(track_name, lexical_diversity), lexical_diversity)) +
+  geom_col(aes(fill = album_name), width = 0.5, alpha = 0.75) +
+  geom_text(aes(label = lexical_diversity), hjust = -0.5, size = 3) +
+  geom_vline(xintercept = 10.5, linetype = "dotted") +
+  coord_flip(ylim = c(0, 0.75)) +
+  labs(x = "song title", y = "lexical diversity", fill = NULL,
+       title = "ten most and least lexically diverse Strokes tracks") +
+  theme(plot.title = element_text(hjust = 0.5))
 ```
 
-    ## # A tibble: 740 × 3
-    ## # Groups:   album_name [6]
-    ##    album_name                 track_name   lexical_diversity
-    ##    <chr>                      <chr>                    <dbl>
-    ##  1 Angles                     Metabolism                1.88
-    ##  2 Angles                     Metabolism                1.81
-    ##  3 Angles                     Metabolism                1.67
-    ##  4 First Impressions Of Earth Killing Lies              1.54
-    ##  5 First Impressions Of Earth Killing Lies              1.53
-    ##  6 Angles                     Metabolism                1.51
-    ##  7 Angles                     Metabolism                1.44
-    ##  8 First Impressions Of Earth Killing Lies              1.37
-    ##  9 Angles                     Games                     1.34
-    ## 10 Angles                     Games                     1.29
-    ## # … with 730 more rows
+![](strokes_files/figure-gfm/unnamed-chunk-25-1.png)<!-- -->
