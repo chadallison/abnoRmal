@@ -1,11 +1,25 @@
 
 # abnoRmal
 
-##### an analysis of The Strokes’ discography using the `spotifyr` package and my Spotify listening history
+##### an analysis of The Strokes’ discography using the `spotifyr` package
 
 ![](strokes_reptilia_narrow.png)
 
 ------------------------------------------------------------------------
+
+### setup
+
+``` r
+library(tidyverse)
+library(spotifyr)
+library(DT)
+library(ggridges)
+options(scipen = 999)
+knitr::opts_chunk$set(message = F, warning = F)
+theme_set(theme_minimal())
+```
+
+### linking to Spotify API
 
 ``` r
 # setting up my Spotify client ID & client secret
@@ -13,6 +27,8 @@ Sys.setenv(SPOTIFY_CLIENT_ID = "client ID here")
 Sys.setenv(SPOTIFY_CLIENT_SECRET = "client secret here")
 access_token = get_spotify_access_token()
 ```
+
+### getting artist information on The Strokes from `spotifyr`
 
 ``` r
 # using spotifyr to get data on The Strokes
@@ -31,8 +47,10 @@ strokes |>
     ## 5               Room On Fire 11
     ## 6           The New Abnormal  9
 
-There are too many tracks for *Is This It* and *First Impressions Of
-Earth* - let’s inspect that (although I wish they had 33 and 28 tracks)
+there are too many tracks for “Is This It” and “First Impressions Of
+Earth” - let’s inspect that (although I wish they had 33 and 28 tracks)
+
+### finding where we have duplicate tracks
 
 ``` r
 strokes |>
@@ -50,7 +68,9 @@ strokes |>
 
 looks like everything is double counted, there seems to just be one
 duplicate - let’s inspect what’s different by looking at the multiple
-entries for the album’s first track, *You Only Live Once*
+entries for the album’s first track, “You Only Live Once”
+
+### getting information for the track “You Only Live Once”
 
 ``` r
 strokes |>
@@ -82,6 +102,8 @@ it looks like i would probably want to default to the most recent
 release. however, as you can see below, the different versions of the
 album in the data have the same release date.
 
+### checking album release dates
+
 ``` r
 strokes |>
   filter(album_name == "First Impressions Of Earth") |>
@@ -101,13 +123,17 @@ so now i’ll make sure to omit all instances of the first version of the
 album using the `album_id` variable, which is unique for each of the two
 versions.
 
+### omitting duplicate album
+
 ``` r
 strokes = strokes |>
   filter(album_id != "1HQ61my1h3VWp2EBWKlp0n")
 ```
 
 and now we need to address the same issue for The Strokes’ first album,
-*Is This It*.
+“Is This It”.
+
+### checking for duplicates for the album “Is This It”
 
 ``` r
 strokes |>
@@ -125,7 +151,9 @@ strokes |>
 
 here we have three different versions of the album. again, taking a look
 at the album images, i can tell which one is the version currently on
-spotify, so i will choose that one to keep.
+Spotify, so i will choose that one to keep.
+
+### omitting duplicates for “Is This It”
 
 ``` r
 strokes = strokes |>
@@ -145,46 +173,23 @@ strokes |>
 
 now the data is free of duplicates and we can resume with our analysis.
 
+### overview of data
+
 ``` r
 strokes |>
   select(artist_name, album_name, track_name) |>
-  head(9)
+  glimpse()
 ```
 
-    ##   artist_name       album_name                    track_name
-    ## 1 The Strokes The New Abnormal        The Adults Are Talking
-    ## 2 The Strokes The New Abnormal                      Selfless
-    ## 3 The Strokes The New Abnormal     Brooklyn Bridge To Chorus
-    ## 4 The Strokes The New Abnormal                 Bad Decisions
-    ## 5 The Strokes The New Abnormal                Eternal Summer
-    ## 6 The Strokes The New Abnormal                   At The Door
-    ## 7 The Strokes The New Abnormal Why Are Sundays So Depressing
-    ## 8 The Strokes The New Abnormal          Not The Same Anymore
-    ## 9 The Strokes The New Abnormal               Ode To The Mets
+    ## Rows: 66
+    ## Columns: 3
+    ## $ artist_name <chr> "The Strokes", "The Strokes", "The Strokes", "The Strokes"~
+    ## $ album_name  <chr> "The New Abnormal", "The New Abnormal", "The New Abnormal"~
+    ## $ track_name  <chr> "The Adults Are Talking", "Selfless", "Brooklyn Bridge To ~
+
+### valence (measure of energy) by album
 
 ``` r
-# genius_get_artists <- function(artist_name = "the strokes", n_results = 10) {
-#   baseURL <- 'https://api.genius.com/search?q='
-#   requestURL <- paste0(baseURL, gsub(' ', '%20', artist_name),
-#                        '&per_page=', n_results,
-#                        '&access_token=', access_token)
-#   
-#   res <- GET(requestURL) %>% content %>% .$response %>% .$hits
-#   
-#   map_df(1:length(res), function(x) {
-#     tmp <- res[[x]]$result$primary_artist
-#     list(
-#       artist_id = tmp$id,
-#       artist_name = tmp$name
-#     )
-#   }) %>% unique
-# }
-# 
-# genius_artists = genius_get_artists("the strokes")
-```
-
-``` r
-# names(strokes)[9:19]
 album_levels = c("Is This It", "Room On Fire", "First Impressions Of Earth",
                  "Angles", "Comedown Machine", "The New Abnormal")
 
@@ -198,48 +203,9 @@ strokes |>
         axis.text.x = element_blank())
 ```
 
-![](strokes_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
+![](strokes_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
 
-``` r
-# library(geniusr)
-# genius_token(T)
-# client id = u2X4arrcpERbK2qUOuWi4-SNWDNUJ8bMinDq6jbQPFWKFthB-g5mHNOZjer1Hk7z
-# client secret = kOLR9vdB1UsVAOT8gttk2EyeMULG71AL4tVuGQlSpvIiy0YNYo8J_NwZerYm-0FATalY4ydA7SRJnTzHS4zfBA
-# access token = q2nsw8oL2l8J5Qs6-Y2DbczMuEUBVgyZ5GetLPuDdxbia3kP78xssEwKSt4GXif0
-```
-
-``` r
-# library(geniusr)
-# library(dplyr)
-# library(tidytext)
-
-# get lyrics
-# get_lyrics_search(artist_name = "Kanye West",
-#                   song_title = "Good Morning") %>% 
-#   # get lyric bigrams
-#   unnest_tokens(bigram, line, token = "ngrams", n = 2) %>%
-#   # look for good morning
-#   filter(bigram == "good morning") %>% 
-#   # count bigram frequency
-#   nrow()
-
-# songs_df = data.frame(song = c("Soma", "Is This It"), lyrics = NA)
-# for (i in 1:nrow(songs_df)) {
-#   df1 = get_lyrics_search(artist_name = "The Strokes", song_title = songs_df$song[1])
-#   str = ""
-#   for (i in 1:nrow(df1)) { str = paste(str, df1$line[i]) }
-#   lyrics = trimws(str)
-#   songs_df$lyrics[i] = lyrics
-#   songs_df
-# }
-
-### THE ABOVE ISN'T WORKING - MIGHT HAVE TO TRY A JOIN INSTEAD ###
-
-# get_lyrics_search(artist_name = "The Strokes",
-#                   song_title = "Soma")
-
-# get_artist_songs(artist_id = "The Strokes")
-```
+### function to scrape song lyrics
 
 ``` r
 get_song_lyrics = function(song) {
@@ -253,72 +219,17 @@ get_song_lyrics = function(song) {
 }
 ```
 
-``` r
-# songs = c("Soma", "Someday")
-#
-# for (song in songs) {
-#   print(get_song_lyrics("The Strokes", song))
-# }
-```
+the above function was able to scrape the lyrics for all but just a few
+tracks. for the remaining tracks, I just searched for its lyrics and
+added them manually.
 
-``` r
-# strokes$lyrics = "nothing yet"
-```
-
-``` r
-# num = 1
-# song_name = strokes$track_name[num]
-# lyrics = get_lyrics_search("The Strokes", song_name) |>
-#   pull(line)
-# 
-# str = ""
-# 
-# for (i in 1:length(lyrics)) {
-#   str = paste(str, lyrics[i])
-# }
-# 
-# str = trimws(str)
-# song_df = data.frame(track_name = song_name, lyrics = str)
-# 
-# strokes = left_join(strokes, song_df, by = "track_name")
-```
-
-``` r
-# lyrs = read_csv("all_with_lyrics.csv", col_types = cols())
-# strokes = left_join(strokes, lyrs, by = "track_name")
-```
-
-``` r
-### this works, chunk below will try to do it in a loop ###
-# strokes |>
-#   arrange(album_release_date) |>
-#   select(track_name, lyrics)
-# 
-# track = "50/50"
-# lyr = get_song_lyrics(track)
-# index = which(strokes$track_name == track)
-# strokes$lyrics[index] = lyr
-
-# strokes[which(is.na(strokes$lyrics)), ] |>
-#   select(track_name, lyrics)
-```
-
-``` r
-# strokes$lyrics[which(strokes$track_name == "50/50")] = "Why's she telling me the story of her life? All the things you wanna kill will give you spite And if you've taken all the prisoners inside As they're doling out their wisdom in the fire I will say! I will say don't judge me! I will say! I will say don't judge me! I wait on a darkened highway! I wait on a darkened highway! I can take as long as without looking by Why's she telling me the story of her life And if you've taken all the prisoners inside As they've thrown all their wisdom in the fire I will say! I will say don't judge me! I will say! I will say don't judge me! I wait on a darkened highway! I wait on a darkened highway! I will say! I will say don't judge me! I will say! I will say don't judge me! I wait on a darkened highway! I wait on a darkened highway!"
-# 
-# strokes$lyrics[which(strokes$track_name == "12:51")] = "Talk to me now I'm older Your friend told you 'cause I told her Friday nights have been lonely Change your plans and then phone me We could go and get forties Fuck goin' to that party Oh, really, your folks are away now? Alright, let's go, you convinced me 12:51 is the time my voice Found the words I sought Is it this stage I want? The world is shutting out for us Oh, we were tense for sure But we was confident Kiss me now that I'm older I won't try to control you Friday nights have been lonely Take it slow but don't warn me We'd go out and get forties Then we'd go to some party Oh, really, your folks are away now? Alright, I'm coming I'll be right there"
-```
-
-``` r
-# strokes |>
-#   count(lyrics)
-```
-
-# WE FINALLY HAVE ALL THE LYRICS
+### loading in data with all lyrics
 
 ``` r
 strokes = read_csv("strokes_all_lyrics.csv", col_types = cols())
 ```
+
+### wordclouds for most common lyrics for different parts of speech
 
 ``` r
 library(tidytext)
@@ -349,25 +260,27 @@ generate_wordcloud = function(part) {
 generate_wordcloud("Noun")
 ```
 
-![](strokes_files/figure-gfm/unnamed-chunk-22-1.png)<!-- -->
+![](strokes_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
 
 ``` r
 generate_wordcloud("Adjective")
 ```
 
-![](strokes_files/figure-gfm/unnamed-chunk-22-2.png)<!-- -->
+![](strokes_files/figure-gfm/unnamed-chunk-12-2.png)<!-- -->
 
 ``` r
 generate_wordcloud("Adverb")
 ```
 
-![](strokes_files/figure-gfm/unnamed-chunk-22-3.png)<!-- -->
+![](strokes_files/figure-gfm/unnamed-chunk-12-3.png)<!-- -->
 
 ``` r
 generate_wordcloud("Verb")
 ```
 
-![](strokes_files/figure-gfm/unnamed-chunk-22-4.png)<!-- -->
+![](strokes_files/figure-gfm/unnamed-chunk-12-4.png)<!-- -->
+
+### pirate plot of track “sonic score” by album
 
 ``` r
 pirateplot(valence + danceability + energy ~ album_release_year, strokes,
@@ -381,7 +294,9 @@ legend("topright", c("1: Is This It", "2: Room on Fire", "3: First Impressions o
                      "4: Angles", "5: Comedown Machine", "6: The New Abnormal"), bty = "n", cex = 0.6)
 ```
 
-![](strokes_files/figure-gfm/unnamed-chunk-23-1.png)<!-- -->
+![](strokes_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
+
+### getting sonic scores for all tracks
 
 ``` r
 sonic_tracks = function(album) {
@@ -494,6 +409,8 @@ lapply(all_albums, sonic_tracks)
     ## 8 The New Abnormal Ode To The Mets                      1.24
     ## 9 The New Abnormal At The Door                          1.14
 
+### lexical diversity: ratio of unique words to total number of words in a track
+
 ``` r
 words_by_album = strokes |>
   select(album_name, track_name, lyrics) |>
@@ -523,6 +440,7 @@ ld_limit = 10
 bind_rows(head(arrange(track_lex_diversity, desc(lexical_diversity)), ld_limit),
           tail(arrange(track_lex_diversity, desc(lexical_diversity)), ld_limit)) |>
   arrange(desc(lexical_diversity)) |>
+  mutate(album_name = factor(album_name, levels = album_levels)) |>
   ggplot(aes(reorder(track_name, lexical_diversity), lexical_diversity)) +
   geom_col(aes(fill = album_name), width = 0.5, alpha = 0.75) +
   geom_text(aes(label = lexical_diversity), hjust = -0.5, size = 3) +
@@ -533,4 +451,76 @@ bind_rows(head(arrange(track_lex_diversity, desc(lexical_diversity)), ld_limit),
   theme(plot.title = element_text(hjust = 0.5))
 ```
 
-![](strokes_files/figure-gfm/unnamed-chunk-25-1.png)<!-- -->
+![](strokes_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
+
+### using AFINN lexicon to get sentiment scores
+
+``` r
+# getting word values from AFINN
+afinn = strokes |>
+  unnest_tokens(word, lyrics) |>
+  inner_join(get_sentiments("afinn")) |>
+  select(track_name, album_name, word, value)
+
+sample_n(afinn, 10)
+```
+
+    ## # A tibble: 10 x 4
+    ##    track_name              album_name                 word    value
+    ##    <chr>                   <chr>                      <chr>   <dbl>
+    ##  1 Automatic Stop          Room On Fire               yeah        1
+    ##  2 Killing Lies            First Impressions Of Earth killing    -3
+    ##  3 Razorblade              First Impressions Of Earth no         -1
+    ##  4 Razorblade              First Impressions Of Earth forget     -1
+    ##  5 Slow Animals            Comedown Machine           wrong      -2
+    ##  6 The Modern Age          Is This It                 please      1
+    ##  7 Taken for a Fool        Angles                     like        2
+    ##  8 Fear of Sleep           First Impressions Of Earth fear       -2
+    ##  9 Meet Me in the Bathroom Room On Fire               dead       -3
+    ## 10 When It Started         Is This It                 dear        2
+
+### which albums are the most positive or negative as a whole?
+
+``` r
+afinn |>
+  group_by(album_name) |>
+  summarise(value = sum(value)) |>
+  mutate(album_name = factor(album_name, rev(album_levels))) |>
+  ggplot(aes(album_name, value)) +
+  geom_col(aes(fill = album_name)) +
+  coord_flip() +
+  labs(x = NULL, y = "negativity / positivity",
+       title = "total lyrical sentiment by album") +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5))
+```
+
+![](strokes_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
+
+### total positivity and negativity in each album
+
+``` r
+afinn |>
+  mutate(pos_neg = ifelse(value > 0, "pos", "neg")) |>
+  group_by(album_name, pos_neg) |>
+  summarise(score = sum(value),
+            .groups = "drop") |>
+  mutate(album = paste0(album_name, "_", pos_neg),
+         album_name = factor(album_name, levels = rev(album_levels)),
+         pos_label = ifelse(score > 0, score, ""),
+         neg_label = ifelse(score < 0, score, "")) |>
+  ggplot(aes(album_name, score)) +
+  geom_col(aes(fill = album)) +
+  geom_text(aes(label = pos_label), size = 3, hjust = 1.5) +
+  geom_text(aes(label = neg_label), size = 3, hjust = -0.5) +
+  scale_fill_manual(values = c("#688BC4", "#C8D7F0", "#B071CE", "#E2C4F0", "#73B15B", "#AED59F",
+                               "#D26969", "#F2B9B9", "#E5A83E", "#EED09D", "#D374C1", "#F7D7F1")) +
+  coord_flip() +
+  labs(x = NULL, y = "negativity / positivity",
+       title = "positive and negative lyrical sentiment by album") +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5),
+        axis.text.x = element_blank())
+```
+
+![](strokes_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
