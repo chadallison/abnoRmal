@@ -24,8 +24,8 @@ theme_set(theme_minimal())
 
 ```{r API link, include = F}
 # setting up my Spotify client ID & client secret
-Sys.setenv(SPOTIFY_CLIENT_ID = "5d531eb87ca340cb8e8e1faad7bed4fa")
-Sys.setenv(SPOTIFY_CLIENT_SECRET = "1f4c4a6c46524ed391414a94dbe5bc4b")
+Sys.setenv(SPOTIFY_CLIENT_ID = "")
+Sys.setenv(SPOTIFY_CLIENT_SECRET = "")
 access_token = get_spotify_access_token()
 ```
 
