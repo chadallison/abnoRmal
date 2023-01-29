@@ -466,18 +466,18 @@ sample_n(afinn, 10)
 ```
 
     ## # A tibble: 10 x 4
-    ##    track_name              album_name                 word    value
-    ##    <chr>                   <chr>                      <chr>   <dbl>
-    ##  1 Automatic Stop          Room On Fire               yeah        1
-    ##  2 Killing Lies            First Impressions Of Earth killing    -3
-    ##  3 Razorblade              First Impressions Of Earth no         -1
-    ##  4 Razorblade              First Impressions Of Earth forget     -1
-    ##  5 Slow Animals            Comedown Machine           wrong      -2
-    ##  6 The Modern Age          Is This It                 please      1
-    ##  7 Taken for a Fool        Angles                     like        2
-    ##  8 Fear of Sleep           First Impressions Of Earth fear       -2
-    ##  9 Meet Me in the Bathroom Room On Fire               dead       -3
-    ## 10 When It Started         Is This It                 dear        2
+    ##    track_name             album_name                 word          value
+    ##    <chr>                  <chr>                      <chr>         <dbl>
+    ##  1 Is This It             Is This It                 dear              2
+    ##  2 Fear of Sleep          First Impressions Of Earth impressed         3
+    ##  3 The Adults Are Talking The New Abnormal           sophisticated     2
+    ##  4 Two Kinds of Happiness Angles                     reward            2
+    ##  5 Welcome To Japan       Comedown Machine           free              1
+    ##  6 Ode To The Mets        The New Abnormal           wrong            -2
+    ##  7 Take It Or Leave It    Is This It                 leave            -1
+    ##  8 Electricityscape       First Impressions Of Earth pretend          -1
+    ##  9 Trying Your Luck       Is This It                 chance            2
+    ## 10 15 Minutes             First Impressions Of Earth inviting          1
 
 ### which albums are the most positive or negative as a whole?
 
@@ -524,3 +524,68 @@ afinn |>
 ```
 
 ![](strokes_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
+
+### getting sentiments from NRC lexicon
+
+``` r
+strokes_nrc = strokes |>
+  unnest_tokens(word, lyrics) |>
+  inner_join(get_sentiments("nrc"), by = "word") |>
+  select(track_name, album_name, word, sentiment) |>
+  filter(!sentiment %in% c("positive", "negative")) |>
+  mutate(album_name = factor(album_name, levels = album_levels))
+
+album_sent = strokes_nrc |>
+  count(album_name, sentiment) |>
+  rename(sent_count = n)
+
+sample_n(album_sent, 10)
+```
+
+    ## # A tibble: 10 x 3
+    ##    album_name                 sentiment    sent_count
+    ##    <fct>                      <chr>             <int>
+    ##  1 The New Abnormal           disgust              41
+    ##  2 The New Abnormal           surprise             22
+    ##  3 First Impressions Of Earth anticipation        123
+    ##  4 The New Abnormal           trust                45
+    ##  5 Comedown Machine           anticipation         51
+    ##  6 First Impressions Of Earth anger                66
+    ##  7 The New Abnormal           fear                 58
+    ##  8 Comedown Machine           sadness              28
+    ##  9 Angles                     anger                54
+    ## 10 Comedown Machine           anger                24
+
+### sentiment percents by album
+
+``` r
+album_counts = strokes_nrc |>
+  count(album_name) |>
+  rename(album_total = n)
+
+radar_df = album_sent |>
+  inner_join(album_counts, by = "album_name") |>
+  mutate(percent = round((sent_count / album_total * 100), 3)) |>
+  select(-c(sent_count, album_total)) |>
+  pivot_wider(sentiment, names_from = "album_name", values_from = "percent")
+
+radar_df |>
+  pivot_longer(!sentiment, names_to = "album", values_to = "percent") |>
+  mutate(album = factor(album, levels = album_levels),
+         sentiment = fct_rev(sentiment)) |>
+  ggplot(aes(sentiment, percent)) +
+  geom_col(aes(fill = album), position = "dodge", alpha = 0.75) +
+  geom_vline(xintercept = 1.5, linetype = "dashed") +
+  geom_vline(xintercept = 2.5, linetype = "dashed") +
+  geom_vline(xintercept = 3.5, linetype = "dashed") +
+  geom_vline(xintercept = 4.5, linetype = "dashed") +
+  geom_vline(xintercept = 5.5, linetype = "dashed") +
+  geom_vline(xintercept = 6.5, linetype = "dashed") +
+  geom_vline(xintercept = 7.5, linetype = "dashed") +
+  coord_flip() +
+  labs(x = "sentiment", y = "percent", fill = NULL,
+       title = "sentiment percentages by album") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+![](strokes_files/figure-gfm/unnamed-chunk-20-1.png)<!-- -->

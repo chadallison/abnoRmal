@@ -1,6 +1,6 @@
 ---
 output: github_document
-# date: "2022-10-17"
+always_allow_html: true
 ---
 
 # abnoRmal
@@ -24,8 +24,8 @@ theme_set(theme_minimal())
 
 ```{r API link, include = F}
 # setting up my Spotify client ID & client secret
-Sys.setenv(SPOTIFY_CLIENT_ID = "")
-Sys.setenv(SPOTIFY_CLIENT_SECRET = "")
+Sys.setenv(SPOTIFY_CLIENT_ID = "5d531eb87ca340cb8e8e1faad7bed4fa")
+Sys.setenv(SPOTIFY_CLIENT_SECRET = "1f4c4a6c46524ed391414a94dbe5bc4b")
 access_token = get_spotify_access_token()
 ```
 
@@ -337,6 +337,55 @@ afinn |>
   theme(legend.position = "none",
         plot.title = element_text(hjust = 0.5),
         axis.text.x = element_blank())
+```
+
+### getting sentiments from NRC lexicon
+
+```{r}
+strokes_nrc = strokes |>
+  unnest_tokens(word, lyrics) |>
+  inner_join(get_sentiments("nrc"), by = "word") |>
+  select(track_name, album_name, word, sentiment) |>
+  filter(!sentiment %in% c("positive", "negative")) |>
+  mutate(album_name = factor(album_name, levels = album_levels))
+
+album_sent = strokes_nrc |>
+  count(album_name, sentiment) |>
+  rename(sent_count = n)
+
+sample_n(album_sent, 10)
+```
+
+### sentiment percents by album
+
+```{r}
+album_counts = strokes_nrc |>
+  count(album_name) |>
+  rename(album_total = n)
+
+radar_df = album_sent |>
+  inner_join(album_counts, by = "album_name") |>
+  mutate(percent = round((sent_count / album_total * 100), 3)) |>
+  select(-c(sent_count, album_total)) |>
+  pivot_wider(sentiment, names_from = "album_name", values_from = "percent")
+
+radar_df |>
+  pivot_longer(!sentiment, names_to = "album", values_to = "percent") |>
+  mutate(album = factor(album, levels = album_levels),
+         sentiment = fct_rev(sentiment)) |>
+  ggplot(aes(sentiment, percent)) +
+  geom_col(aes(fill = album), position = "dodge", alpha = 0.75) +
+  geom_vline(xintercept = 1.5, linetype = "dashed") +
+  geom_vline(xintercept = 2.5, linetype = "dashed") +
+  geom_vline(xintercept = 3.5, linetype = "dashed") +
+  geom_vline(xintercept = 4.5, linetype = "dashed") +
+  geom_vline(xintercept = 5.5, linetype = "dashed") +
+  geom_vline(xintercept = 6.5, linetype = "dashed") +
+  geom_vline(xintercept = 7.5, linetype = "dashed") +
+  coord_flip() +
+  labs(x = "sentiment", y = "percent", fill = NULL,
+       title = "sentiment percentages by album") +
+  theme(plot.title = element_text(hjust = 0.5))
 ```
 
 
